@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Cherry Blossoms · 櫻</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; height:100%; background:#000; overflow:hidden; }
+  canvas { display:block; }
+  #bars { position:fixed; inset:0; pointer-events:none; }
+  #bars::before, #bars::after { content:""; position:absolute; left:0; right:0; background:#000;
+    height:max(0px, calc((100vh - 100vw / 2.39) / 2)); }
+  #bars::before { top:0; } #bars::after { bottom:0; }
+  .card { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    pointer-events:none; opacity:0; color:#f4e6d2; text-shadow:0 0 18px rgba(0,0,0,.6); }
+  .card.show { opacity:1; }
+  .card .zh { font-family:'Ma Shan Zheng', 'KaiTi', 'DFKai-SB', 'PingFang TC', serif; font-size:min(22vh, 18vw); line-height:1; letter-spacing:.04em; }
+  .card .en { font-family:'Cormorant Garamond', 'Georgia', serif; font-weight:300; font-style:italic; font-size:min(4.2vh, 4vw); letter-spacing:.32em; margin-top:1.2vh; text-transform:uppercase; }
+  .card .small { font-family:'Cormorant Garamond', 'Georgia', serif; font-weight:300; font-size:min(2.4vh, 2.6vw); letter-spacing:.28em; margin-top:3vh; opacity:.75; }
+  #progress { position:fixed; left:0; bottom:0; height:2px; width:0; background:rgba(244,230,210,.55); transition:none; }
+  #hint { position:fixed; right:14px; bottom:10px; font:300 12px 'Cormorant Garamond', Georgia, serif; letter-spacing:.2em; color:rgba(244,230,210,.45); }
+</style>
+</head>
+<body>
+<div id="bars"></div>
+<div id="title" class="card"><div class="zh">櫻</div><div class="en">Cherry Blossoms</div></div>
+<div id="credit" class="card"><div class="en">Cherry Blossoms</div><div class="small">Vite · Three.js · no 3D software</div></div>
+<div id="progress"></div>
+<div id="hint">SPACE pause · R replay</div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

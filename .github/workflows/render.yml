@@ -1,0 +1,109 @@
+name: render
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      chunks:
+        description: how many parallel jobs the 1710 frames are split across
+        default: "12"
+      width:
+        default: "1920"
+      height:
+        default: "1080"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: render-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # every push: build, publish the live page, and capture a few stills as a smoke test
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - name: capture stills at 3s, 15s, 25s, 34s, 41s, 48s
+        run: |
+          for f in 90 450 750 1020 1230 1440; do node scripts/render.mjs --start $f --end $f --out stills; done
+          ls -la stills
+      - uses: actions/upload-artifact@v4
+        with: { name: stills, path: stills/ }
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: dist }
+
+  pages:
+    needs: preview
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    steps:
+      - id: d
+        uses: actions/deploy-pages@v4
+
+  plan:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        run: |
+          python3 - "${{ inputs.chunks }}" <<'PY' >> "$GITHUB_OUTPUT"
+          import json, sys
+          n = int(sys.argv[1]); total = 1710; per = -(-total // n)
+          items = [{"start": s, "end": min(total - 1, s + per - 1)} for s in range(0, total, per)]
+          print("matrix=" + json.dumps({"include": items}))
+          PY
+
+  frames:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - run: node scripts/render.mjs --start ${{ matrix.start }} --end ${{ matrix.end }} --out frames --width ${{ inputs.width }} --height ${{ inputs.height }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frames-${{ matrix.start }}
+          path: frames/
+          compression-level: 0
+
+  stitch:
+    needs: frames
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { pattern: frames-*, path: all, merge-multiple: true }
+      - name: stitch with ffmpeg
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          ls all | wc -l
+          ffmpeg -y -framerate 30 -i all/f%05d.png -c:v libx264 -pix_fmt yuv420p -crf 17 -preset slow -movflags +faststart cherry_blossoms.mp4
+          ffmpeg -y -i cherry_blossoms.mp4 -vf "select='not(mod(n\,171))',scale=640:-1,tile=5x2" -frames:v 1 contact_sheet.png
+          ls -la cherry_blossoms.mp4 contact_sheet.png
+      - name: attach to a release
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          tag="run-${{ github.run_number }}"
+          gh release create "$tag" cherry_blossoms.mp4 contact_sheet.png --title "Cherry Blossoms render $tag" --notes "57 s, 30 fps, ${{ inputs.width }}x${{ inputs.height }}, rendered on GitHub Actions in ${{ inputs.chunks }} chunks."

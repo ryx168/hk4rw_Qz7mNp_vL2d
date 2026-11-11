@@ -1,0 +1,19 @@
+{
+  "name": "cherry-blossoms",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "render": "node scripts/render.mjs"
+  },
+  "dependencies": {
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.0.0",
+    "vite": "^8.3.6"
+  }
+}
