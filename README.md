@@ -10,6 +10,8 @@ petals, paper-cut / shadow-puppet restraint).
   headless in parallel chunks, stitched with ffmpeg, and attached to a release
   tagged `run-<number>` together with a contact sheet.
 
+![six frames: 3 s, 13 s, 24 s, 34 s, 40.5 s, 53 s](docs/contact_sheet.jpg)
+
 ## What is in the frame
 
 | Part | How |
