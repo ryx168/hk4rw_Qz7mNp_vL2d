@@ -35,8 +35,10 @@ if (!url) {
 const browser = await puppeteer.launch({
   headless: true,
   executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-  args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
-         '--ignore-gpu-blocklist', '--hide-scrollbars', `--window-size=${W},${H}`, '--force-device-scale-factor=1'],
+  // GL_ARGS overrides the GPU flags. Default: ANGLE on SwiftShader (what a GPU-less CI runner has).
+  // Without --disable-gpu-compositing every shader fails to link under SwiftShader on Windows Chrome (blank frames).
+  args: ['--no-sandbox', '--disable-dev-shm-usage', '--hide-scrollbars', `--window-size=${W},${H}`, '--force-device-scale-factor=1',
+         ...(process.env.GL_ARGS ? process.env.GL_ARGS.split(' ') : ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-compositing'])],
 });
 const page = await browser.newPage();
 await page.setViewport({ width: W, height: H, deviceScaleFactor: 1 });
