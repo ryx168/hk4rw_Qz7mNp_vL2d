@@ -46,7 +46,9 @@ page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') co
 page.on('pageerror', e => { console.log('[pageerror]', e.message); process.exitCode = 1; });
 await page.goto(url + '?render=1', { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => window.__film && window.__film.isReady, { timeout: 120000 });
-await page.evaluate(() => document.fonts.ready);
+await page.evaluate(() => Promise.all([document.fonts.load("100px 'Ma Shan Zheng'", '樱'), document.fonts.load("italic 300 40px 'Cormorant Garamond'"), document.fonts.ready]));
+const fontsOk = await page.evaluate(() => document.fonts.check("100px 'Ma Shan Zheng'", '樱') && document.fonts.check("italic 300 40px 'Cormorant Garamond'"));
+if (!fontsOk) { console.log('FONTS NOT LOADED: the title would render as tofu'); process.exit(2); }
 console.log(`rendering frames ${start}..${end} at ${W}x${H} from ${url}`);
 await page.evaluate((t) => window.__film.seek(t), start / FPS);   // throwaway: first render after load is not trustworthy
 const t0 = Date.now();

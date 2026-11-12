@@ -1,4 +1,4 @@
-# Cherry Blossoms · 櫻
+# Cherry Blossoms · 樱
 
 A 57-second micro-film, all code: Vite + Three.js, no 3D software, no image
 assets. Built in reply to the @cfenghub post about Opus 5.5's "Cherry Blossoms"
