@@ -5,12 +5,13 @@ assets. Built in reply to the @cfenghub post about Opus 5.5's "Cherry Blossoms"
 (sunset melting into gold, ink-wash mountains, a lone swordsman under falling
 petals, paper-cut / shadow-puppet restraint).
 
-- **Watch it live:** the `pages` job publishes `dist/` to GitHub Pages on every push.
-- **Rendered MP4:** `Run workflow` on the `render` action; 1710 frames are captured
-  headless in parallel chunks, stitched with ffmpeg, and attached to a release
-  tagged `run-<number>` together with a contact sheet.
+- **Watch it live:** https://ryx168.github.io/hk4rw_Qz7mNp_vL2d/ (the `pages` job publishes `dist/` on every push; SPACE pauses, R replays).
+- **Rendered MP4:** https://github.com/ryx168/hk4rw_Qz7mNp_vL2d/releases/latest — 1920x1080, 30 fps, 57 s.
+  `Run workflow` on the `render` action captures the 1710 frames headless in parallel
+  chunks, stitches them with ffmpeg, and attaches the MP4 and a contact sheet to a
+  release tagged `run-<number>`.
 
-![six frames: 3 s, 13 s, 24 s, 34 s, 40.5 s, 53 s](docs/contact_sheet.jpg)
+![ten frames from the release render, one every 5.7 s](docs/contact_sheet.jpg)
 
 ## What is in the frame
 
