@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { mulberry32 } from './util.js';
+import { S } from './scenes.js';
 
 // A loose V of silhouette birds crossing the sky on cue.
 export function makeBirds() {
   const g = new THREE.Group();
   const rnd = mulberry32(21);
-  const mat = new THREE.MeshBasicMaterial({ color: 0x120a14, side: THREE.DoubleSide, fog: true });
+  const mat = new THREE.MeshBasicMaterial({ color: S.birds, side: THREE.DoubleSide, fog: true });
   const wing = new THREE.BufferGeometry();
   wing.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0.9, 0.18, 0, 0.55, -0.08, 0], 3));
   wing.setIndex([0, 1, 2]);

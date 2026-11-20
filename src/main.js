@@ -9,6 +9,7 @@ import { makeBirds } from './birds.js';
 import { makePuppet } from './puppet.js';
 import { makePost } from './post.js';
 import { smooth, clamp, lerp } from './util.js';
+import { S, SCENE_ID, SCENE_IDS } from './scenes.js';
 
 const DURATION = 57, FPS = 30;
 const RENDER_MODE = new URLSearchParams(location.search).has('render');
@@ -18,12 +19,12 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'hi
 renderer.setPixelRatio(RENDER_MODE ? 1 : Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.9;
+renderer.toneMappingExposure = S.exposure;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.prepend(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xe9a05a, 40, 900);
+scene.fog = new THREE.Fog(S.fog.color, S.fog.near, S.fog.far);
 const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 3200);
 
 const U = {
@@ -52,10 +53,10 @@ U.uGustPos.value.set(P.x, P.y + 1.2, P.z);
 scene.add(makePetals(U));
 const birds = makeBirds(); scene.add(birds);
 
-const sun = new THREE.DirectionalLight(0xffb061, 3.2);
+const sun = new THREE.DirectionalLight(S.light.color, S.light.intensity);
 sun.target.position.set(0, 1, 0);
 scene.add(sun, sun.target);
-scene.add(new THREE.HemisphereLight(0x5a3a66, 0x0a0608, 0.35));
+scene.add(new THREE.HemisphereLight(S.hemi.sky, S.hemi.ground, S.hemi.intensity));
 
 const post = makePost(renderer, scene, camera);
 
@@ -86,11 +87,21 @@ const ramp = (t, a, b) => smooth((t - a) / (b - a));
 const window_ = (t, a, b, c, d) => ramp(t, a, b) * (1 - ramp(t, c, d));
 
 const $title = document.getElementById('title'), $credit = document.getElementById('credit'), $prog = document.getElementById('progress');
+// titles and their colour come from the scene, so the page text matches the film
+$title.querySelector('.zh').textContent = S.title.zh;
+$title.querySelector('.en').textContent = S.title.en;
+$credit.querySelector('.en').textContent = S.title.en;
+$credit.querySelector('.small').textContent = S.title.small;
+for (const el of [$title, $credit]) { el.style.color = S.title.color; el.style.textShadow = `0 0 18px ${S.title.shadow}`; }
+document.title = `${S.title.en} · ${S.title.zh}`;
+// the hint follows the title colour so it stays legible on a pale (snow) frame. Not the
+// progress bar: it is part of the rendered frames, and dusk must stay byte-identical.
+const $hint = document.getElementById("hint"); $hint.style.color = S.title.color; $hint.style.opacity = "0.5";
 
 function update(t) {
   U.uTime.value = t;
   // the sun sinks a little over the film
-  const el = lerp(0.13, 0.035, t / DURATION);
+  const el = lerp(S.sunEl[0], S.sunEl[1], t / DURATION);
   U.uSun.value.set(0.28, el, -1).normalize();
   sun.position.copy(U.uSun.value).multiplyScalar(200);
   // gust state: most recent gust that has started
@@ -138,6 +149,8 @@ if (RENDER_MODE) {
   addEventListener('keydown', (e) => {
     if (e.code === 'Space') { e.preventDefault(); paused = !paused; if (paused) pausedAt = performance.now(); else start += performance.now() - pausedAt; }
     if (e.key === 'r' || e.key === 'R') { start = performance.now(); paused = false; }
+    const n = parseInt(e.key, 10);                                  // 1-4 switch film
+    if (n >= 1 && n <= SCENE_IDS.length && SCENE_IDS[n - 1] !== SCENE_ID) location.search = `?scene=${SCENE_IDS[n - 1]}`;
   });
   // warm the shaders on a black frame so the first second is not a stutter
   update(0); post.composer.render();

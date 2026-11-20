@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { makeNoise1D, GLSL_NOISE } from './util.js';
+import { S, v3, f1 } from './scenes.js';
 
 // Layered paper-cut ridges. MeshBasicMaterial honours scene.fog, so the farther
 // layers melt into the horizon colour on their own (aerial perspective for free).
@@ -24,7 +25,8 @@ export function makeMountains() {
     pts.push(new THREE.Vector2(W / 2, -80), new THREE.Vector2(-W / 2, -80));
     const shape = new THREE.Shape(pts);
     const t = i / (layers - 1);
-    const col = new THREE.Color().setRGB(0.07 + 0.30 * t, 0.04 + 0.20 * t, 0.10 + 0.28 * t);
+    const [b, r] = [S.mountains.base, S.mountains.ramp];
+    const col = new THREE.Color().setRGB(b[0] + r[0] * t, b[1] + r[1] * t, b[2] + r[2] * t);
     const mesh = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({ color: col, fog: true }));
     mesh.position.z = z;
     mesh.renderOrder = -10 + i;
@@ -40,7 +42,7 @@ export function makeMist(uniforms) {
   for (const [z, y, h, a] of defs) {
     const mat = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, fog: false,
-      uniforms: { uTime: uniforms.uTime, uAlpha: { value: a }, uSeed: { value: Math.abs(z) * 0.01 } },
+      uniforms: { uTime: uniforms.uTime, uAlpha: { value: a * S.mist.alpha }, uSeed: { value: Math.abs(z) * 0.01 } },
       vertexShader: /* glsl */`varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
       fragmentShader: /* glsl */`
         uniform float uTime, uAlpha, uSeed; varying vec2 vUv; ${GLSL_NOISE}
@@ -49,7 +51,7 @@ export function makeMist(uniforms) {
           float n = fbm(vec2(vUv.x * 7.0 + uTime * 0.012 + uSeed, vUv.y * 2.0 + uSeed));
           n = smoothstep(0.30, 0.75, n);
           float edge = smoothstep(0.0, 0.08, vUv.x) * smoothstep(1.0, 0.92, vUv.x);
-          gl_FragColor = vec4(vec3(1.0, 0.80, 0.55), v * n * uAlpha * edge);
+          gl_FragColor = vec4(${v3(S.mist.color)}, v * n * uAlpha * edge);
         }`
     });
     const m = new THREE.Mesh(new THREE.PlaneGeometry(1800, h), mat);

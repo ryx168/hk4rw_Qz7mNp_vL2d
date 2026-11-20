@@ -1,11 +1,16 @@
 import * as THREE from 'three';
 import { mulberry32 } from './util.js';
+import { S, v3, f1 } from './scenes.js';
 
 function petalTexture() {
   const c = document.createElement('canvas'); c.width = 64; c.height = 96;
   const g = c.getContext('2d');
   g.translate(32, 48);
   g.fillStyle = '#fff';
+  if (S.petals.shape === 'flake') {             // a soft round snowflake
+    g.beginPath(); g.ellipse(0, 0, 26, 26, 0, 0, Math.PI * 2); g.fill();
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  }
   g.beginPath();
   g.moveTo(0, -44);
   g.bezierCurveTo(26, -30, 28, 20, 0, 44);
@@ -38,13 +43,14 @@ export function makePetals(uniforms) {
     vertexShader: /* glsl */`
       attribute vec4 seed;
       uniform float uTime, uGust, uGustT; uniform vec3 uCenter, uGustPos;
-      varying vec2 vUv; varying vec3 vWorld; varying float vShade;
+      varying vec2 vUv; varying vec3 vWorld; varying float vShade; varying float vAlt;
       mat2 rot(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
       void main(){
         vUv = uv;
         float t = uTime;
         vec3 box = vec3(44.0, 14.0, 44.0);
-        float fall = 0.45 + seed.z * 0.55;
+        float fall = (0.45 + seed.z * 0.55) * ${f1(S.petals.fall)};
+        vAlt = step(seed.x, ${f1(S.petals.altFrac)} - 0.000001);
         float y = mod(seed.y * box.y - t * fall, box.y);
         float x = seed.x * box.x + t * (0.55 + seed.w * 0.4) + sin(t * (0.6 + seed.z) + seed.w * 6.28) * 0.6;
         float z = seed.w * box.z + t * 0.25 + cos(t * (0.5 + seed.x) + seed.y * 6.28) * 0.5;
@@ -62,20 +68,20 @@ export function makePetals(uniforms) {
         vec3 v = position;
         v.xy = rot(a1) * v.xy;
         v.xz = rot(a2) * v.xz;
-        v *= 0.8 + seed.y * 0.5;
+        v *= (0.8 + seed.y * 0.5) * ${f1(S.petals.size)};
         vShade = 0.72 + 0.28 * sin(a2);
         vec3 w = p + v; vWorld = w;
         gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
       }`,
     fragmentShader: /* glsl */`
       uniform sampler2D uMap; uniform vec3 uSun;
-      varying vec2 vUv; varying vec3 vWorld; varying float vShade;
+      varying vec2 vUv; varying vec3 vWorld; varying float vShade; varying float vAlt;
       void main(){
         float a = texture2D(uMap, vUv).a; if (a < 0.5) discard;
         vec3 vd = normalize(vWorld - cameraPosition);
         float back = pow(max(dot(vd, uSun), 0.0), 5.0);
-        vec3 col = mix(vec3(0.96, 0.72, 0.80), vec3(1.0, 0.90, 0.93), vUv.y) * vShade;
-        col = mix(col, vec3(1.0, 0.86, 0.62), back * 0.7);
+        vec3 col = mix(mix(${v3(S.petals.a)}, ${v3(S.petals.b)}, vUv.y), ${v3(S.petals.alt)}, vAlt) * vShade;
+        col = mix(col, ${v3(S.petals.back)}, back * ${f1(S.petals.backAmt)});
         gl_FragColor = vec4(col, 1.0);
       }`
   });

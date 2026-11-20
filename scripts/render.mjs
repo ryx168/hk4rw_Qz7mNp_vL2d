@@ -13,6 +13,7 @@ for (let i = 0; i < argv.length; i++) if (argv[i].startsWith('--')) { args[argv[
 const FPS = 30, DURATION = 57, TOTAL = FPS * DURATION;
 const start = +(args.start ?? 0), end = Math.min(+(args.end ?? TOTAL - 1), TOTAL - 1);
 const out = args.out ?? 'frames';
+const scene = args.scene ?? 'dusk';
 const W = +(args.width ?? 1920), H = +(args.height ?? 1080);
 mkdirSync(out, { recursive: true });
 
@@ -44,12 +45,14 @@ const page = await browser.newPage();
 await page.setViewport({ width: W, height: H, deviceScaleFactor: 1 });
 page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') console.log('[page]', m.text()); });
 page.on('pageerror', e => { console.log('[pageerror]', e.message); process.exitCode = 1; });
-await page.goto(url + '?render=1', { waitUntil: 'load', timeout: 120000 });
+await page.goto(url + `?render=1&scene=${encodeURIComponent(scene)}`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => window.__film && window.__film.isReady, { timeout: 120000 });
-await page.evaluate(() => Promise.all([document.fonts.load("100px 'Ma Shan Zheng'", '樱'), document.fonts.load("italic 300 40px 'Cormorant Garamond'"), document.fonts.ready]));
-const fontsOk = await page.evaluate(() => document.fonts.check("100px 'Ma Shan Zheng'", '樱') && document.fonts.check("italic 300 40px 'Cormorant Garamond'"));
+// check the glyph this film actually shows, not a fixed one: each scene has its own title character
+const glyph = await page.evaluate(() => document.querySelector('#title .zh').textContent);
+await page.evaluate((g) => Promise.all([document.fonts.load("100px 'Ma Shan Zheng'", g), document.fonts.load("italic 300 40px 'Cormorant Garamond'"), document.fonts.ready]), glyph);
+const fontsOk = await page.evaluate((g) => document.fonts.check("100px 'Ma Shan Zheng'", g) && document.fonts.check("italic 300 40px 'Cormorant Garamond'"), glyph);
 if (!fontsOk) { console.log('FONTS NOT LOADED: the title would render as tofu'); process.exit(2); }
-console.log(`rendering frames ${start}..${end} at ${W}x${H} from ${url}`);
+console.log(`rendering ${scene} (${glyph}) frames ${start}..${end} at ${W}x${H} from ${url}`);
 await page.evaluate((t) => window.__film.seek(t), start / FPS);   // throwaway: first render after load is not trustworthy
 const t0 = Date.now();
 for (let f = start; f <= end; f++) {

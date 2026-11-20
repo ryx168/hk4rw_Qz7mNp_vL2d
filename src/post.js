@@ -5,12 +5,13 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { GLSL_NOISE } from './util.js';
+import { S } from './scenes.js';
 
 // Bloom for the sun, then a "film" pass: paper fibre, grain, vignette, fade.
 export function makePost(renderer, scene, camera) {
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.28, 0.55, 0.92);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), S.bloom, 0.55, 0.92);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
   const film = new ShaderPass({

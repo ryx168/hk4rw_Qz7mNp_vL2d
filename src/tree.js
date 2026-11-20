@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { mulberry32 } from './util.js';
+import { S, v3, f1 } from './scenes.js';
 
 function blossomTexture() {
   const c = document.createElement('canvas'); c.width = c.height = 128;
@@ -46,9 +47,9 @@ export function makeTree(uniforms, seed = 3) {
     if (depth >= 4) tips.push(end);
   }
   branch(new THREE.Vector3(0, -0.3, 0), new THREE.Vector3(0.06, 1, -0.03).normalize(), 2.4, 0.21, 0);
-  const trunk = new THREE.Mesh(mergeGeometries(geos), new THREE.MeshStandardMaterial({ color: 0x0b0710, roughness: 0.9 }));
+  const trunk = new THREE.Mesh(mergeGeometries(geos), new THREE.MeshStandardMaterial({ color: S.trunk, roughness: 0.9 }));
 
-  const per = 14;
+  const per = S.blossom.perTip;
   const N = tips.length * per;
   const base = new THREE.PlaneGeometry(1, 1);
   const geo = new THREE.InstancedBufferGeometry().copy(base);
@@ -94,10 +95,10 @@ export function makeTree(uniforms, seed = 3) {
         float a = texture2D(uMap, vUv).a; if (a < 0.5) discard;
         vec3 vd = normalize(vWorld - cameraPosition);
         float back = pow(max(dot(vd, uSun), 0.0), 4.0);
-        vec3 base = mix(vec3(0.93, 0.50, 0.64), vec3(1.0, 0.80, 0.86), vSeed);
+        vec3 base = mix(${v3(S.blossom.a)}, ${v3(S.blossom.b)}, vSeed);
         float shade = 0.55 + 0.40 * fract(vSeed * 13.7);
         vec3 col = base * shade;
-        col = mix(col, vec3(1.0, 0.85, 0.60), back * 0.75);
+        col = mix(col, ${v3(S.blossom.back)}, back * ${f1(S.blossom.backAmt)});
         float rim = smoothstep(0.32, 0.5, length(vUv - 0.5));
         col *= 1.0 - rim * 0.18;
         gl_FragColor = vec4(col, 1.0);

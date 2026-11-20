@@ -29,21 +29,22 @@ export const GLSL_NOISE = /* glsl */`
 `;
 
 // The sky gradient is one function so the lake can mirror it exactly.
+import { S, v3, f1 } from './scenes.js';
 export const GLSL_SKY = /* glsl */`
   vec3 skyColor(vec3 d, vec3 sun){
     float h = d.y;
-    vec3 cHor = vec3(1.00, 0.70, 0.32);
-    vec3 cLow = vec3(0.93, 0.45, 0.30);
-    vec3 cMid = vec3(0.55, 0.28, 0.42);
-    vec3 cUp  = vec3(0.22, 0.14, 0.34);
-    vec3 cTop = vec3(0.07, 0.06, 0.16);
+    vec3 cHor = ${v3(S.sky.hor)};
+    vec3 cLow = ${v3(S.sky.low)};
+    vec3 cMid = ${v3(S.sky.mid)};
+    vec3 cUp  = ${v3(S.sky.up)};
+    vec3 cTop = ${v3(S.sky.top)};
     float hh = max(h, 0.0);
     vec3 c = mix(cHor, cLow, smoothstep(0.0, 0.08, hh));
     c = mix(c, cMid, smoothstep(0.06, 0.22, hh));
     c = mix(c, cUp,  smoothstep(0.20, 0.45, hh));
     c = mix(c, cTop, smoothstep(0.45, 0.90, hh));
     float sd = max(dot(d, sun), 0.0);
-    c += vec3(1.0, 0.72, 0.42) * pow(sd, 6.0) * 0.22 * (1.0 - smoothstep(0.0, 0.45, hh));
+    c += ${v3(S.sky.horGlow)} * pow(sd, 6.0) * ${f1(S.sky.horGlowAmt)} * (1.0 - smoothstep(0.0, 0.45, hh));
     c = mix(c, cHor * 0.92, smoothstep(0.0, -0.12, h));
     return c;
   }

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mulberry32, makeNoise1D } from './util.js';
+import { S, v3, f1 } from './scenes.js';
 
 const n1 = makeNoise1D(77), n2 = makeNoise1D(78);
 // One height function shared by the mesh, the grass, the tree and the puppet.
@@ -19,7 +20,7 @@ export function makeGround() {
   const p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) p.setY(i, groundHeight(p.getX(i), p.getZ(i)));
   geo.computeVertexNormals();
-  const mat = new THREE.MeshStandardMaterial({ color: 0x120b16, roughness: 0.95, metalness: 0 });
+  const mat = new THREE.MeshStandardMaterial({ color: S.ground, roughness: 0.95, metalness: 0 });
   return new THREE.Mesh(geo, mat);
 }
 
@@ -69,7 +70,7 @@ export function makeGrass(uniforms) {
       void main(){
         vec3 vd = normalize(vWorld - cameraPosition);
         float back = pow(max(dot(vd, uSun), 0.0), 8.0);
-        vec3 col = mix(vec3(0.05, 0.03, 0.06), vec3(0.95, 0.62, 0.30), back * vT * 0.9);
+        vec3 col = mix(${v3(S.grass.base)}, ${v3(S.grass.tip)}, back * vT * ${f1(S.grass.tipAmt)});
         gl_FragColor = vec4(col, 1.0);
       }`
   });
